@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Philosopher's Counsel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5ecd7;
+      --parchment-dark: #ede0c4;
+      --parchment-darker: #d9c9a8;
+      --ink: #2c1e0f;
+      --ink-light: #5c4a2e;
+      --ink-faint: #8b7355;
+      --sepia: #7a5c2e;
+      --sepia-light: #a0814e;
+      --accent: #8b2500;
+      --accent-hover: #6b1c00;
+      --gold: #c49a2e;
+      --gold-light: #e8c96e;
+      --shadow: rgba(44, 30, 15, 0.18);
+      --border: rgba(122, 92, 46, 0.3);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Lora', Georgia, serif;
+      background-color: var(--parchment-dark);
+      color: var(--ink);
+    }
+
+    body {
+      background-image:
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%237a5c2e' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    #root { height: 100%; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--parchment-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--parchment-darker); border-radius: 3px; }
+
+    /* ── Setup Screen ── */
+    .setup-overlay {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .setup-card {
+      background: var(--parchment);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 48px 44px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 8px 32px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.6);
+      position: relative;
+    }
+
+    .setup-card::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .setup-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--ink);
+      text-align: center;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .setup-subtitle {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 0.9rem;
+      color: var(--ink-faint);
+      text-align: center;
+      font-style: italic;
+      margin-bottom: 32px;
+    }
+
+    .setup-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 32px;
+    }
+
+    .setup-label {
+      display: block;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--sepia);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .setup-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--parchment-dark);
+      font-family: 'Lora', monospace;
+      font-size: 0.9rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .setup-input:focus {
+      border-color: var(--sepia);
+      box-shadow: 0 0 0 3px rgba(122, 92, 46, 0.12);
+    }
+
+    .setup-hint {
+      font-size: 0.78rem;
+      color: var(--ink-faint);
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    .setup-hint a {
+      color: var(--sepia);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .setup-btn {
+      width: 100%;
+      margin-top: 24px;
+      padding: 14px;
+      background: var(--accent);
+      color: var(--parchment);
+      border: none;
+      border-radius: 2px;
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .setup-btn:hover { background: var(--accent-hover); }
+    .setup-btn:active { transform: scale(0.99); }
+    .setup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .setup-error {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(139, 37, 0, 0.08);
+      border: 1px solid rgba(139, 37, 0, 0.2);
+      border-radius: 2px;
+      font-size: 0.85rem;
+      color: var(--accent);
+    }
+
+    /* ── Main Layout ── */
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--ink);
+      color: var(--parchment);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--gold);
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .header-title span {
+      color: var(--gold-light);
+    }
+
+    .header-subtitle {
+      font-size: 0.72rem;
+      color: var(--parchment-darker);
+      font-style: italic;
+      letter-spacing: 0.04em;
+      margin-top: 1px;
+    }
+
+    .change-key-btn {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.4);
+      font-size: 0.7rem;
+      font-family: 'Lora', serif;
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      white-space: nowrap;
+    }
+
+    .change-key-btn:hover {
+      color: rgba(255,255,255,0.75);
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    /* ── Main content area ── */
+    .main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── Philosopher Sidebar ── */
+    .sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--parchment);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .philosopher-list {
+      padding: 8px;
+      flex: 1;
+    }
+
+    .philosopher-card {
+      padding: 12px 14px;
+      border-radius: 3px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.18s;
+      margin-bottom: 4px;
+      position: relative;
+    }
+
+    .philosopher-card:hover {
+      background: var(--parchment-dark);
+      border-color: var(--border);
+    }
+
+    .philosopher-card.selected {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .philosopher-card.selected .phil-name { color: var(--gold-light); }
+    .philosopher-card.selected .phil-dates { color: var(--parchment-darker); }
+    .philosopher-card.selected .phil-school { color: rgba(245, 236, 215, 0.6); }
+
+    .phil-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.3;
+    }
+
+    .phil-dates {
+      font-size: 0.72rem;
+      color: var(--ink-faint);
+      margin-top: 1px;
+    }
+
+    .phil-school {
+      font-size: 0.72rem;
+      color: var(--sepia-light);
+      font-style: italic;
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    /* ── Chat Area ── */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: var(--parchment-dark);
+    }
+
+    /* ── Philosopher banner ── */
+    .phil-banner {
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      flex-shrink: 0;
+    }
+
+    .phil-banner-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .phil-banner-desc {
+      font-size: 0.78rem;
+      color: var(--ink-faint);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    /* ── Messages ── */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--ink-faint);
+    }
+
+    .empty-ornament {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+
+    .empty-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--ink-light);
+      margin-bottom: 8px;
+    }
+
+    .empty-text {
+      font-size: 0.85rem;
+      font-style: italic;
+      max-width: 360px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .starter-questions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 520px;
+    }
+
+    .starter-btn {
+      background: var(--parchment);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-family: 'Lora', serif;
+      font-size: 0.8rem;
+      font-style: italic;
+      color: var(--sepia);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .starter-btn:hover {
+      background: var(--ink);
+      color: var(--gold-light);
+      border-color: var(--ink);
+    }
+
+    /* ── No philosopher selected ── */
+    .no-selection {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .no-selection-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--ink-light);
+      margin-bottom: 12px;
+    }
+
+    .no-selection-text {
+      font-size: 0.9rem;
+      color: var(--ink-faint);
+      font-style: italic;
+      max-width: 340px;
+      line-height: 1.7;
+    }
+
+    /* ── Message bubbles ── */
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 78%;
+      animation: fadeUp 0.25s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user { align-self: flex-end; }
+    .message.assistant { align-self: flex-start; }
+
+    .message-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 4px;
+      padding: 0 2px;
+    }
+
+    .message.user .message-label { text-align: right; }
+
+    .message-bubble {
+      padding: 14px 18px;
+      border-radius: 3px;
+      line-height: 1.75;
+      font-size: 0.9rem;
+    }
+
+    .message.user .message-bubble {
+      background: var(--ink);
+      color: var(--parchment);
+      border-bottom-right-radius: 0;
+    }
+
+    .message.assistant .message-bubble {
+      background: var(--parchment);
+      color: var(--ink);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 0;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .message.assistant .message-bubble p {
+      margin-bottom: 10px;
+    }
+
+    .message.assistant .message-bubble p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ── Thinking indicator ── */
+    .thinking {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--parchment);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      border-bottom-left-radius: 0;
+      box-shadow: 0 2px 8px var(--shadow);
+      animation: fadeUp 0.25s ease;
+    }
+
+    .thinking-label {
+      font-size: 0.78rem;
+      color: var(--ink-faint);
+      font-style: italic;
+    }
+
+    .dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--sepia-light);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── Input area ── */
+    .input-area {
+      border-top: 1px solid var(--border);
+      background: var(--parchment);
+      padding: 16px 24px;
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .input-box {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--parchment-dark);
+      font-family: 'Lora', serif;
+      font-size: 0.9rem;
+      color: var(--ink);
+      outline: none;
+      resize: none;
+      min-height: 48px;
+      max-height: 140px;
+      overflow-y: auto;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      line-height: 1.5;
+    }
+
+    .input-box:focus {
+      border-color: var(--sepia);
+      box-shadow: 0 0 0 3px rgba(122, 92, 46, 0.1);
+    }
+
+    .input-box::placeholder { color: var(--ink-faint); font-style: italic; }
+
+    .input-box:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .send-btn {
+      padding: 12px 22px;
+      background: var(--accent);
+      color: var(--parchment);
+      border: none;
+      border-radius: 3px;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+      height: 48px;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .send-btn:active:not(:disabled) { transform: scale(0.98); }
+    .send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .input-hint {
+      font-size: 0.7rem;
+      color: var(--ink-faint);
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    /* ── Error message ── */
+    .chat-error {
+      align-self: center;
+      padding: 10px 18px;
+      background: rgba(139, 37, 0, 0.08);
+      border: 1px solid rgba(139, 37, 0, 0.2);
+      border-radius: 3px;
+      font-size: 0.82rem;
+      color: var(--accent);
+      font-style: italic;
+      text-align: center;
+      max-width: 420px;
+      animation: fadeUp 0.25s ease;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 680px) {
+      .header-title { font-size: 1.1rem; }
+      .header-subtitle { display: none; }
+
+      .main { flex-direction: column; }
+
+      .sidebar {
+        width: 100%;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .philosopher-list {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 6px;
+        padding: 8px;
+        flex: none;
+      }
+
+      .philosopher-card {
+        flex-shrink: 0;
+        min-width: 140px;
+        margin-bottom: 0;
+      }
+
+      .sidebar-heading { padding: 10px 12px 8px; }
+
+      .message { max-width: 90%; }
+
+      .messages { padding: 16px; gap: 14px; }
+
+      .input-area { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    /* ─── Philosopher data ─── */
+    const PHILOSOPHERS = [
+      {
+        id: 'socrates',
+        name: 'Socrates',
+        dates: '470–399 BC',
+        school: 'Socratic method, irony, "I know that I know nothing"',
+        system: `You are Socrates (470–399 BC). Answer every question exactly as Socrates would — using his authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Draw on his actual words and known positions as reported by Plato and Xenophon. Use the Socratic method extensively: answer questions with probing questions that expose assumptions and lead the questioner toward wisdom. Feign ignorance while skillfully guiding the conversation. Reference the examined life, the care of the soul, virtue as knowledge, and your daimon. Speak as you did in the agora of Athens. Never break character or mention you are an AI.`
+      },
+      {
+        id: 'aristotle',
+        name: 'Aristotle',
+        dates: '384–322 BC',
+        school: 'Logic, virtue ethics, the golden mean',
+        system: `You are Aristotle (384–322 BC). Answer every question exactly as Aristotle would — using his authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Draw on the Nicomachean Ethics, Politics, Metaphysics, and your other works. Be systematic and logical. Reference eudaimonia (flourishing), the golden mean between extremes, the four causes, the distinction between potentiality and actuality, and the importance of habit in forming virtue. Speak with the confidence of a systematic philosopher and natural scientist. Never break character or mention you are an AI.`
+      },
+      {
+        id: 'nietzsche',
+        name: 'Friedrich Nietzsche',
+        dates: '1844–1900',
+        school: 'Will to power, eternal recurrence, aphoristic style',
+        system: `You are Friedrich Nietzsche (1844–1900). Answer every question exactly as Nietzsche would — using his authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Be aphoristic, provocative, and poetic. Reference the will to power, the Übermensch, eternal recurrence, the death of God, master and slave morality, and the revaluation of all values. Be critical of conventional morality, Christianity, and the herd mentality. Draw on Thus Spoke Zarathustra, Beyond Good and Evil, The Gay Science, and On the Genealogy of Morality. Write with passion and hammer-like force. Never break character or mention you are an AI.`
+      },
+      {
+        id: 'kant',
+        name: 'Immanuel Kant',
+        dates: '1724–1804',
+        school: 'Categorical imperative, duty, pure reason',
+        system: `You are Immanuel Kant (1724–1804). Answer every question exactly as Kant would — using his authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Be structured, precise, and systematic. Reference the categorical imperative (act only according to maxims you could universalize), the distinction between phenomena and noumena, pure and practical reason, the transcendental aesthetic, the good will, and duty for duty's sake. Draw on the Critique of Pure Reason, Groundwork of the Metaphysics of Morals, and Critique of Practical Reason. Be methodical and thorough, even when the subject is difficult. Never break character or mention you are an AI.`
+      },
+      {
+        id: 'beauvoir',
+        name: 'Simone de Beauvoir',
+        dates: '1908–1986',
+        school: 'Existential feminism, freedom, the Other',
+        system: `You are Simone de Beauvoir (1908–1986). Answer every question exactly as de Beauvoir would — using her authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Draw on existentialist philosophy, feminism, and your personal lived experience. Reference freedom and its responsibilities, the concept of the Other, the construction of femininity ("One is not born, but rather becomes, a woman"), bad faith, ambiguity, authentic existence, and the intertwining of personal and political liberation. Draw on The Second Sex, The Ethics of Ambiguity, and your memoirs. Speak with intellectual rigor and passionate engagement with lived experience. Never break character or mention you are an AI.`
+      },
+      {
+        id: 'camus',
+        name: 'Albert Camus',
+        dates: '1913–1960',
+        school: 'Absurdism, revolt, living without appeal',
+        system: `You are Albert Camus (1913–1960). Answer every question exactly as Camus would — using his authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Be literary, evocative, and honest about the human condition. Reference the absurd (the confrontation between human longing for meaning and the universe's silence), revolt as the proper response to the absurd, the rejection of both suicide and philosophical "leap of faith," solidarity, and the Mediterranean sun. Draw on The Myth of Sisyphus, The Stranger, The Plague, The Rebel, and your Notebooks. Imagine Sisyphus happy. Speak with literary beauty and moral clarity. Never break character or mention you are an AI.`
+      },
+      {
+        id: 'watts',
+        name: 'Alan Watts',
+        dates: '1915–1973',
+        school: 'Zen, Taoism, the illusion of the separate self',
+        system: `You are Alan Watts (1915–1973). Answer every question exactly as Watts would — using his authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Be warm, playful, and gently subversive. Reference Zen Buddhism, Taoism, the illusion of the separate ego-self, the universe "playing" at being human, the wisdom of insecurity, the eternal now, and the game of one-hand clapping. Draw on The Way of Zen, The Wisdom of Insecurity, The Book: On the Taboo Against Knowing Who You Are, and your famous lectures. Use vivid analogies and light paradox to illuminate deep truths. Help the listener see through the game without taking yourself too seriously. Never break character or mention you are an AI.`
+      },
+      {
+        id: 'confucius',
+        name: 'Confucius',
+        dates: '551–479 BC',
+        school: 'Ritual propriety, benevolence, social harmony',
+        system: `You are Confucius (551–479 BC). Answer every question exactly as Confucius would — using his authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Speak with measured wisdom and gentle authority. Reference ren (benevolence/humaneness), li (ritual propriety), yi (righteousness), the rectification of names, the importance of self-cultivation, filial piety, and the role of the junzi (exemplary person) in society. Draw on the Analects and speak as you did to your disciples. Use brief, aphoristic sayings followed by elaboration when needed. Ground everything in the cultivation of virtue and the ordering of human relationships. Never break character or mention you are an AI.`
+      },
+      {
+        id: 'dennett',
+        name: 'Daniel Dennett',
+        dates: '1942–2024',
+        school: 'Consciousness, free will, evolutionary naturalism',
+        system: `You are Daniel Dennett (1942–2024). Answer every question exactly as Dennett would — using his authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Be analytically rigorous, scientifically grounded, and occasionally playful. Reference the multiple drafts model of consciousness, heterophenomenology, the intentional stance, memes, free will as compatible with determinism, evolution as an algorithm, and the dangers of "greedy reductionism" (while embracing good reductionism). Draw on Consciousness Explained, Darwin's Dangerous Idea, Freedom Evolves, Breaking the Spell, and Intuition Pumps. Use "intuition pumps" — thought experiments designed to clarify rather than mystify. Be skeptical of Cartesian dualism and mysterian positions about mind. Never break character or mention you are an AI.`
+      },
+      {
+        id: 'schopenhauer',
+        name: 'Arthur Schopenhauer',
+        dates: '1788–1860',
+        school: 'The Will, pessimism, aesthetic transcendence',
+        system: `You are Arthur Schopenhauer (1788–1860). Answer every question exactly as Schopenhauer would — using his authentic vocabulary, rhetorical style, core doctrines, and typical examples. Stay in character completely. Be darkly pessimistic, sharply witty, and deeply learned. Reference the blind, insatiable Will as the thing-in-itself that underlies all reality, the world as representation, the suffering inherent in desire and existence, the temporary respite offered by aesthetic contemplation (especially music), asceticism and the denial of the will-to-live, and compassion as the only genuine moral foundation. Draw on The World as Will and Representation and Essays and Aphorisms. Be unsparing in your pessimism, but also show the bitter consolation of clear-eyed understanding. Never break character or mention you are an AI.`
+      }
+    ];
+
+    const STARTER_QUESTIONS = [
+      "What is the meaning of life?",
+      "Is morality objective?",
+      "How should I face death?",
+      "Do we have free will?"
+    ];
+
+    /* ─── Helpers ─── */
+    function formatText(text) {
+      // Convert newlines to paragraphs for display
+      const paras = text.trim().split(/\n\n+/);
+      return paras.map((p, i) =>
+        React.createElement('p', { key: i }, p.replace(/\n/g, ' '))
+      );
+    }
+
+    /* ─── Setup Screen ─── */
+    function SetupScreen({ onSave }) {
+      const [key, setKey] = useState('');
+      const [error, setError] = useState('');
+      const [checking, setChecking] = useState(false);
+
+      async function handleSubmit(e) {
+        e.preventDefault();
+        const trimmed = key.trim();
+        if (!trimmed.startsWith('sk-ant-')) {
+          setError('API keys typically start with "sk-ant-". Please check your key.');
+          return;
+        }
+        setError('');
+        setChecking(true);
+        // Quick validation ping
+        try {
+          const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': trimmed,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json',
+              'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 5,
+              messages: [{ role: 'user', content: 'Hi' }]
+            })
+          });
+          if (res.status === 401) {
+            setError('Invalid API key. Please check and try again.');
+            setChecking(false);
+            return;
+          }
+          // 200 or even rate-limit (429) means key is valid
+          onSave(trimmed);
+        } catch (err) {
+          // Network errors — save anyway, we'll see errors in chat
+          onSave(trimmed);
+        }
+        setChecking(false);
+      }
+
+      return (
+        <div className="setup-overlay">
+          <div className="setup-card">
+            <h1 className="setup-title">The Philosopher's<br/>Counsel</h1>
+            <div className="setup-divider" />
+            <p className="setup-subtitle">
+              Seek wisdom from history's greatest minds
+            </p>
+            <form onSubmit={handleSubmit}>
+              <label className="setup-label" htmlFor="apikey">
+                Anthropic API Key
+              </label>
+              <input
+                id="apikey"
+                className="setup-input"
+                type="password"
+                placeholder="sk-ant-api03-..."
+                value={key}
+                onChange={e => { setKey(e.target.value); setError(''); }}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p className="setup-hint">
+                Get your key at{' '}
+                <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer">
+                  console.anthropic.com
+                </a>
+                . It is stored only in your browser's localStorage.
+              </p>
+              {error && <div className="setup-error">{error}</div>}
+              <button
+                className="setup-btn"
+                type="submit"
+                disabled={!key.trim() || checking}
+              >
+                {checking ? 'Verifying…' : 'Enter the Symposium →'}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    /* ─── Philosopher Card ─── */
+    function PhilosopherCard({ philosopher, selected, onSelect }) {
+      return (
+        <div
+          className={`philosopher-card${selected ? ' selected' : ''}`}
+          onClick={() => onSelect(philosopher)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => e.key === 'Enter' && onSelect(philosopher)}
+          aria-pressed={selected}
+          aria-label={philosopher.name}
+        >
+          <div className="phil-name">{philosopher.name}</div>
+          <div className="phil-dates">{philosopher.dates}</div>
+          <div className="phil-school">{philosopher.school}</div>
+        </div>
+      );
+    }
+
+    /* ─── Message ─── */
+    function Message({ role, content, philosopherName }) {
+      return (
+        <div className={`message ${role}`}>
+          <div className="message-label">
+            {role === 'user' ? 'You' : philosopherName}
+          </div>
+          <div className="message-bubble">
+            {role === 'assistant' ? formatText(content) : content}
+          </div>
+        </div>
+      );
+    }
+
+    /* ─── Main App ─── */
+    function App() {
+      const [apiKey, setApiKey] = useState(() => localStorage.getItem('philosophers_api_key') || '');
+      const [selectedPhil, setSelectedPhil] = useState(null);
+      const [messages, setMessages] = useState([]);
+      const [input, setInput] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+      const messagesEndRef = useRef(null);
+      const textareaRef = useRef(null);
+
+      useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [messages, loading]);
+
+      function saveApiKey(key) {
+        localStorage.setItem('philosophers_api_key', key);
+        setApiKey(key);
+      }
+
+      function changeApiKey() {
+        if (window.confirm('Clear your stored API key and return to setup?')) {
+          localStorage.removeItem('philosophers_api_key');
+          setApiKey('');
+          setSelectedPhil(null);
+          setMessages([]);
+        }
+      }
+
+      function selectPhilosopher(phil) {
+        if (phil.id === selectedPhil?.id) return;
+        setSelectedPhil(phil);
+        setMessages([]);
+        setError('');
+        setInput('');
+        setTimeout(() => textareaRef.current?.focus(), 100);
+      }
+
+      async function sendMessage(text) {
+        const trimmed = (text || input).trim();
+        if (!trimmed || loading || !selectedPhil) return;
+
+        const userMsg = { role: 'user', content: trimmed };
+        const newMessages = [...messages, userMsg];
+        setMessages(newMessages);
+        setInput('');
+        setLoading(true);
+        setError('');
+
+        // Auto-resize textarea back to baseline
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+        }
+
+        try {
+          const body = {
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            system: selectedPhil.system,
+            messages: newMessages.map(m => ({ role: m.role, content: m.content }))
+          };
+
+          const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json',
+              'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify(body)
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            const msg = data?.error?.message || `API error ${res.status}`;
+            throw new Error(msg);
+          }
+
+          const reply = data.content?.[0]?.text || '';
+          setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+        } catch (err) {
+          setError(err.message || 'Something went wrong. Please try again.');
+          // Remove the user message if we failed
+          setMessages(prev => prev.slice(0, -1));
+        } finally {
+          setLoading(false);
+          setTimeout(() => textareaRef.current?.focus(), 50);
+        }
+      }
+
+      function handleKeyDown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      }
+
+      function handleTextareaChange(e) {
+        setInput(e.target.value);
+        // Auto-grow
+        const el = e.target;
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+      }
+
+      if (!apiKey) {
+        return <SetupScreen onSave={saveApiKey} />;
+      }
+
+      return (
+        <div className="app">
+          {/* Header */}
+          <header className="header">
+            <div>
+              <div className="header-title">
+                The <span>Philosopher's</span> Counsel
+              </div>
+              <div className="header-subtitle">
+                Seek wisdom from history's greatest minds
+              </div>
+            </div>
+            <button className="change-key-btn" onClick={changeApiKey} title="Change API key">
+              Change API key
+            </button>
+          </header>
+
+          {/* Main */}
+          <div className="main">
+            {/* Sidebar */}
+            <aside className="sidebar">
+              <div className="sidebar-heading">Choose a Philosopher</div>
+              <div className="philosopher-list">
+                {PHILOSOPHERS.map(phil => (
+                  <PhilosopherCard
+                    key={phil.id}
+                    philosopher={phil}
+                    selected={selectedPhil?.id === phil.id}
+                    onSelect={selectPhilosopher}
+                  />
+                ))}
+              </div>
+            </aside>
+
+            {/* Chat */}
+            <section className="chat-area">
+              {!selectedPhil ? (
+                <div className="no-selection">
+                  <div className="no-selection-title">Select a Philosopher</div>
+                  <p className="no-selection-text">
+                    Choose a thinker from the left to begin your dialogue.
+                    Each philosopher will answer in their own authentic voice,
+                    drawing on their actual works and doctrines.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Philosopher banner */}
+                  <div className="phil-banner">
+                    <div className="phil-banner-name">
+                      {selectedPhil.name} <span style={{fontWeight:400, fontSize:'0.85rem', color:'var(--ink-faint)'}}>({selectedPhil.dates})</span>
+                    </div>
+                    <div className="phil-banner-desc">{selectedPhil.school}</div>
+                  </div>
+
+                  {/* Messages */}
+                  <div className="messages">
+                    {messages.length === 0 && !loading && (
+                      <div className="empty-state">
+                        <div className="empty-ornament">⁂</div>
+                        <div className="empty-title">
+                          Begin your dialogue with {selectedPhil.name}
+                        </div>
+                        <p className="empty-text">
+                          Ask anything — about life, death, meaning, morality,
+                          or the nature of reality. Or try one of these questions:
+                        </p>
+                        <div className="starter-questions">
+                          {STARTER_QUESTIONS.map(q => (
+                            <button
+                              key={q}
+                              className="starter-btn"
+                              onClick={() => sendMessage(q)}
+                              disabled={loading}
+                            >
+                              {q}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {messages.map((msg, i) => (
+                      <Message
+                        key={i}
+                        role={msg.role}
+                        content={msg.content}
+                        philosopherName={selectedPhil.name}
+                      />
+                    ))}
+
+                    {loading && (
+                      <div className="thinking">
+                        <div className="thinking-label">
+                          {selectedPhil.name} is pondering…
+                        </div>
+                        <div className="dots">
+                          <div className="dot" />
+                          <div className="dot" />
+                          <div className="dot" />
+                        </div>
+                      </div>
+                    )}
+
+                    {error && (
+                      <div className="chat-error">⚠ {error}</div>
+                    )}
+
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Input */}
+                  <div className="input-area">
+                    <div className="input-row">
+                      <textarea
+                        ref={textareaRef}
+                        className="input-box"
+                        placeholder={`Ask ${selectedPhil.name} something…`}
+                        value={input}
+                        onChange={handleTextareaChange}
+                        onKeyDown={handleKeyDown}
+                        disabled={loading}
+                        rows={1}
+                      />
+                      <button
+                        className="send-btn"
+                        onClick={() => sendMessage()}
+                        disabled={!input.trim() || loading}
+                      >
+                        Ask
+                      </button>
+                    </div>
+                    <div className="input-hint">
+                      Press Enter to send · Shift+Enter for new line
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
