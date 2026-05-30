@@ -63,7 +63,7 @@
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 48px 44px;
-      max-width: 480px;
+      max-width: 500px;
       width: 100%;
       box-shadow: 0 8px 32px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.6);
       position: relative;
@@ -94,15 +94,59 @@
       color: var(--ink-faint);
       text-align: center;
       font-style: italic;
-      margin-bottom: 32px;
+      margin-bottom: 20px;
     }
 
     .setup-divider {
       width: 60px;
       height: 2px;
       background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      margin: 0 auto 32px;
+      margin: 0 auto 24px;
     }
+
+    .free-badge {
+      display: inline-block;
+      background: #1a6b2e;
+      color: #fff;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .setup-steps {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      font-size: 0.82rem;
+      line-height: 1.75;
+      color: var(--ink-light);
+    }
+
+    .setup-steps strong {
+      color: var(--ink);
+      font-family: 'Playfair Display', serif;
+    }
+
+    .setup-steps a {
+      color: var(--sepia);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      font-weight: 500;
+    }
+
+    .setup-steps ol {
+      padding-left: 18px;
+      margin-top: 6px;
+    }
+
+    .setup-steps li { margin-bottom: 2px; }
 
     .setup-label {
       display: block;
@@ -140,15 +184,9 @@
       font-style: italic;
     }
 
-    .setup-hint a {
-      color: var(--sepia);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-
     .setup-btn {
       width: 100%;
-      margin-top: 24px;
+      margin-top: 20px;
       padding: 14px;
       background: var(--accent);
       color: var(--parchment);
@@ -202,9 +240,7 @@
       letter-spacing: 0.02em;
     }
 
-    .header-title span {
-      color: var(--gold-light);
-    }
+    .header-title span { color: var(--gold-light); }
 
     .header-subtitle {
       font-size: 0.72rem;
@@ -274,7 +310,6 @@
       cursor: pointer;
       transition: all 0.18s;
       margin-bottom: 4px;
-      position: relative;
     }
 
     .philosopher-card:hover {
@@ -287,7 +322,7 @@
       border-color: var(--ink);
     }
 
-    .philosopher-card.selected .phil-name { color: var(--gold-light); }
+    .philosopher-card.selected .phil-name  { color: var(--gold-light); }
     .philosopher-card.selected .phil-dates { color: var(--parchment-darker); }
     .philosopher-card.selected .phil-school { color: rgba(245, 236, 215, 0.6); }
 
@@ -455,7 +490,7 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    .message.user { align-self: flex-end; }
+    .message.user      { align-self: flex-end; }
     .message.assistant { align-self: flex-start; }
 
     .message-label {
@@ -520,10 +555,7 @@
       font-style: italic;
     }
 
-    .dots {
-      display: flex;
-      gap: 4px;
-    }
+    .dots { display: flex; gap: 4px; }
 
     .dot {
       width: 6px;
@@ -579,11 +611,7 @@
     }
 
     .input-box::placeholder { color: var(--ink-faint); font-style: italic; }
-
-    .input-box:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .input-box:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .send-btn {
       padding: 12px 22px;
@@ -601,7 +629,7 @@
       flex-shrink: 0;
     }
 
-    .send-btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .send-btn:hover:not(:disabled)  { background: var(--accent-hover); }
     .send-btn:active:not(:disabled) { transform: scale(0.98); }
     .send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -623,7 +651,7 @@
       color: var(--accent);
       font-style: italic;
       text-align: center;
-      max-width: 420px;
+      max-width: 460px;
       animation: fadeUp 0.25s ease;
     }
 
@@ -670,7 +698,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback } = React;
+    const { useState, useEffect, useRef } = React;
 
     /* ─── Philosopher data ─── */
     const PHILOSOPHERS = [
@@ -753,9 +781,48 @@
       "Do we have free will?"
     ];
 
+    /* ─── Gemini API call ─── */
+    // Uses the free Gemini 2.0 Flash model (no billing required, just a Google account)
+    async function callGemini(apiKey, systemPrompt, messages) {
+      const GEMINI_MODEL = 'gemini-2.0-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+      // Convert message history to Gemini format (role: "user" | "model")
+      const contents = messages.map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
+
+      const body = {
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: {
+          maxOutputTokens: 1000,
+          temperature: 0.9
+        }
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const msg = data?.error?.message || `API error ${res.status}`;
+        throw new Error(msg);
+      }
+
+      // Extract text from response
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Empty response from API.');
+      return text;
+    }
+
     /* ─── Helpers ─── */
     function formatText(text) {
-      // Convert newlines to paragraphs for display
       const paras = text.trim().split(/\n\n+/);
       return paras.map((p, i) =>
         React.createElement('p', { key: i }, p.replace(/\n/g, ' '))
@@ -771,38 +838,24 @@
       async function handleSubmit(e) {
         e.preventDefault();
         const trimmed = key.trim();
-        if (!trimmed.startsWith('sk-ant-')) {
-          setError('API keys typically start with "sk-ant-". Please check your key.');
-          return;
-        }
+        if (!trimmed) return;
+
         setError('');
         setChecking(true);
-        // Quick validation ping
+
+        // Quick validation: send a minimal request
         try {
-          const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'x-api-key': trimmed,
-              'anthropic-version': '2023-06-01',
-              'content-type': 'application/json',
-              'anthropic-dangerous-direct-browser-access': 'true'
-            },
-            body: JSON.stringify({
-              model: 'claude-sonnet-4-20250514',
-              max_tokens: 5,
-              messages: [{ role: 'user', content: 'Hi' }]
-            })
-          });
-          if (res.status === 401) {
-            setError('Invalid API key. Please check and try again.');
-            setChecking(false);
-            return;
-          }
-          // 200 or even rate-limit (429) means key is valid
+          await callGemini(trimmed, 'You are a helpful assistant.', [
+            { role: 'user', content: 'Say "ok"' }
+          ]);
           onSave(trimmed);
         } catch (err) {
-          // Network errors — save anyway, we'll see errors in chat
-          onSave(trimmed);
+          if (err.message.includes('API_KEY_INVALID') || err.message.includes('401') || err.message.includes('400')) {
+            setError('Invalid API key. Make sure you copied it correctly from Google AI Studio.');
+          } else {
+            // Other errors (network, quota) — save and let the user try in chat
+            onSave(trimmed);
+          }
         }
         setChecking(false);
       }
@@ -812,29 +865,37 @@
           <div className="setup-card">
             <h1 className="setup-title">The Philosopher's<br/>Counsel</h1>
             <div className="setup-divider" />
-            <p className="setup-subtitle">
-              Seek wisdom from history's greatest minds
-            </p>
+            <div style={{textAlign:'center', marginBottom:'16px'}}>
+              <span className="free-badge">100% Free to Use</span>
+            </div>
+
+            <div className="setup-steps">
+              <strong>Get your free Google Gemini API key (takes 1 minute):</strong>
+              <ol>
+                <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/apikey</a></li>
+                <li>Sign in with any Google account</li>
+                <li>Click <strong>Create API key</strong></li>
+                <li>Copy and paste it below</li>
+              </ol>
+              No credit card. No billing. Google's free tier covers personal use.
+            </div>
+
             <form onSubmit={handleSubmit}>
               <label className="setup-label" htmlFor="apikey">
-                Anthropic API Key
+                Google Gemini API Key
               </label>
               <input
                 id="apikey"
                 className="setup-input"
                 type="password"
-                placeholder="sk-ant-api03-..."
+                placeholder="AIza..."
                 value={key}
                 onChange={e => { setKey(e.target.value); setError(''); }}
                 autoComplete="off"
                 spellCheck={false}
               />
               <p className="setup-hint">
-                Get your key at{' '}
-                <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer">
-                  console.anthropic.com
-                </a>
-                . It is stored only in your browser's localStorage.
+                Stored only in your browser's localStorage — never sent anywhere except Google's API.
               </p>
               {error && <div className="setup-error">{error}</div>}
               <button
@@ -885,27 +946,27 @@
 
     /* ─── Main App ─── */
     function App() {
-      const [apiKey, setApiKey] = useState(() => localStorage.getItem('philosophers_api_key') || '');
+      const [apiKey, setApiKey]         = useState(() => localStorage.getItem('philosophers_gemini_key') || '');
       const [selectedPhil, setSelectedPhil] = useState(null);
-      const [messages, setMessages] = useState([]);
-      const [input, setInput] = useState('');
-      const [loading, setLoading] = useState(false);
-      const [error, setError] = useState('');
-      const messagesEndRef = useRef(null);
-      const textareaRef = useRef(null);
+      const [messages, setMessages]     = useState([]);
+      const [input, setInput]           = useState('');
+      const [loading, setLoading]       = useState(false);
+      const [error, setError]           = useState('');
+      const messagesEndRef              = useRef(null);
+      const textareaRef                 = useRef(null);
 
       useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, [messages, loading]);
 
       function saveApiKey(key) {
-        localStorage.setItem('philosophers_api_key', key);
+        localStorage.setItem('philosophers_gemini_key', key);
         setApiKey(key);
       }
 
       function changeApiKey() {
         if (window.confirm('Clear your stored API key and return to setup?')) {
-          localStorage.removeItem('philosophers_api_key');
+          localStorage.removeItem('philosophers_gemini_key');
           setApiKey('');
           setSelectedPhil(null);
           setMessages([]);
@@ -925,49 +986,20 @@
         const trimmed = (text || input).trim();
         if (!trimmed || loading || !selectedPhil) return;
 
-        const userMsg = { role: 'user', content: trimmed };
+        const userMsg    = { role: 'user', content: trimmed };
         const newMessages = [...messages, userMsg];
         setMessages(newMessages);
         setInput('');
         setLoading(true);
         setError('');
 
-        // Auto-resize textarea back to baseline
-        if (textareaRef.current) {
-          textareaRef.current.style.height = 'auto';
-        }
+        if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
         try {
-          const body = {
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1000,
-            system: selectedPhil.system,
-            messages: newMessages.map(m => ({ role: m.role, content: m.content }))
-          };
-
-          const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'x-api-key': apiKey,
-              'anthropic-version': '2023-06-01',
-              'content-type': 'application/json',
-              'anthropic-dangerous-direct-browser-access': 'true'
-            },
-            body: JSON.stringify(body)
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            const msg = data?.error?.message || `API error ${res.status}`;
-            throw new Error(msg);
-          }
-
-          const reply = data.content?.[0]?.text || '';
+          const reply = await callGemini(apiKey, selectedPhil.system, newMessages);
           setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
         } catch (err) {
           setError(err.message || 'Something went wrong. Please try again.');
-          // Remove the user message if we failed
           setMessages(prev => prev.slice(0, -1));
         } finally {
           setLoading(false);
@@ -984,7 +1016,6 @@
 
       function handleTextareaChange(e) {
         setInput(e.target.value);
-        // Auto-grow
         const el = e.target;
         el.style.height = 'auto';
         el.style.height = Math.min(el.scrollHeight, 140) + 'px';
@@ -996,7 +1027,6 @@
 
       return (
         <div className="app">
-          {/* Header */}
           <header className="header">
             <div>
               <div className="header-title">
@@ -1011,9 +1041,7 @@
             </button>
           </header>
 
-          {/* Main */}
           <div className="main">
-            {/* Sidebar */}
             <aside className="sidebar">
               <div className="sidebar-heading">Choose a Philosopher</div>
               <div className="philosopher-list">
@@ -1028,7 +1056,6 @@
               </div>
             </aside>
 
-            {/* Chat */}
             <section className="chat-area">
               {!selectedPhil ? (
                 <div className="no-selection">
@@ -1041,15 +1068,16 @@
                 </div>
               ) : (
                 <>
-                  {/* Philosopher banner */}
                   <div className="phil-banner">
                     <div className="phil-banner-name">
-                      {selectedPhil.name} <span style={{fontWeight:400, fontSize:'0.85rem', color:'var(--ink-faint)'}}>({selectedPhil.dates})</span>
+                      {selectedPhil.name}{' '}
+                      <span style={{fontWeight:400, fontSize:'0.85rem', color:'var(--ink-faint)'}}>
+                        ({selectedPhil.dates})
+                      </span>
                     </div>
                     <div className="phil-banner-desc">{selectedPhil.school}</div>
                   </div>
 
-                  {/* Messages */}
                   <div className="messages">
                     {messages.length === 0 && !loading && (
                       <div className="empty-state">
@@ -1098,14 +1126,11 @@
                       </div>
                     )}
 
-                    {error && (
-                      <div className="chat-error">⚠ {error}</div>
-                    )}
+                    {error && <div className="chat-error">⚠ {error}</div>}
 
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Input */}
                   <div className="input-area">
                     <div className="input-row">
                       <textarea

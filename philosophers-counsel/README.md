@@ -2,6 +2,8 @@
 
 A standalone web app where you can hold conversations with ten of history's greatest philosophers — each answering in their own authentic voice, vocabulary, and philosophical style.
 
+**Powered by Google Gemini — completely free, no billing required.**
+
 ## Philosophers
 
 | Philosopher | Dates | School |
@@ -17,15 +19,19 @@ A standalone web app where you can hold conversations with ten of history's grea
 | Daniel Dennett | 1942–2024 | Consciousness, free will, evolutionary naturalism |
 | Arthur Schopenhauer | 1788–1860 | The Will, pessimism, aesthetic transcendence |
 
-## Getting an Anthropic API Key
+## Getting a Free Google Gemini API Key
 
-1. Go to [console.anthropic.com](https://console.anthropic.com)
-2. Sign up or log in
-3. Navigate to **API Keys** in the left sidebar
-4. Click **Create Key**, give it a name, and copy it
-5. Paste it into the app's setup screen
+1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+2. Sign in with any Google account
+3. Click **Create API key**
+4. Copy and paste it into the app's setup screen
 
-The key is stored only in your browser's `localStorage` — it is never sent anywhere except directly to Anthropic's API.
+No credit card. No billing. Google's free tier (Gemini 2.0 Flash) includes:
+- 1,500 requests per day
+- 1 million tokens per minute
+- No payment method required
+
+The key is stored only in your browser's `localStorage` — it is never sent anywhere except directly to Google's API.
 
 ## Running Locally
 
@@ -72,10 +78,10 @@ Then open `http://localhost:8080`.
 
 ## Usage Notes
 
-- **API costs**: Each message uses the `claude-sonnet-4-20250514` model. Conversations are short but keep an eye on your Anthropic usage dashboard.
-- **Conversation history**: The full conversation is sent with each message for coherent multi-turn dialogue. Long conversations will use more tokens.
+- **Free tier limits**: 1,500 requests/day and 1M tokens/minute is more than enough for personal use.
+- **Conversation history**: The full conversation is sent with each message for coherent multi-turn dialogue.
 - **Switching philosophers**: Selecting a different philosopher clears the conversation and starts fresh.
-- **Privacy**: Your API key and conversations never leave your browser except as direct API calls to Anthropic.
+- **Privacy**: Your API key and conversations never leave your browser except as direct API calls to Google.
 
 ## License
 
